@@ -1,0 +1,45 @@
+# Arxiv论文爬虫系统依赖包
+
+# 异步HTTP客户端
+aiohttp>=3.8.0
+aiofiles>=23.0.0
+
+# XML解析
+lxml>=4.9.0
+
+# PDF处理
+PyPDF2>=3.0.0
+pdfplumber>=0.9.0
+
+# 数据处理
+requests>=2.28.0
+
+# 日志和配置
+coloredlogs>=15.0
+
+# 类型提示
+typing-extensions>=4.0.0
+
+# 文件处理
+pathlib2>=2.3.0
+
+# 日期时间
+python-dateutil>=2.8.0
+
+# 正则表达式增强
+regex>=2022.0.0
+
+# JSON处理
+orjson>=3.8.0
+
+# 进度条
+tqdm>=4.64.0
+
+# 异步任务调度
+apscheduler>=3.9.0
+
+# 定时任务调度
+schedule>=1.2.0
+
+# 时间处理
+pytz>=2023.3

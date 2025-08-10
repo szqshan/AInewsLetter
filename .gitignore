@@ -1,46 +1,7 @@
-# 敏感信息文件 - 绝对不能推送到GitHub
+# 敏感信息文件
 GitHub 信息.txt
 
-# 环境配置文件
-.env
-.env.local
-.env.production
-
-# 密钥文件
-*.key
-*.pem
-*.p12
-*.pfx
-
-# 数据库配置
-config.json
-database.json
-
-# 日志文件
-*.log
-logs/
-
-# 临时文件
-*.tmp
-*.temp
-
-# IDE配置文件
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# 操作系统文件
-.DS_Store
-Thumbs.db
-
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Python
+# Python缓存文件
 __pycache__/
 *.py[cod]
 *$py.class
@@ -61,13 +22,60 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+PIPFILE.lock
 
-# 虚拟环境
-venv/
+# 环境变量文件
+.env
+.venv
 env/
+venv/
 ENV/
+env.bak/
+venv.bak/
+
+# IDE文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 日志文件
+*.log
+nohup.out
+
+# 数据文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 临时文件
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 爬虫数据缓存
+crawled_data/
+pdfs/
+images/
+data/raw/
+data/processed/
+*.json
+*.csv
+*.xlsx
+
+# MinIO相关
+minio-data/
+minio.exe
 
 # 备份文件
+backups/
 *.bak
 *.backup
-*.old
