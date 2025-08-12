@@ -184,10 +184,7 @@ class ArxivCrawler:
             "primary_category": paper.get('primary_category', ''),
             "url": paper.get('url', ''),
             "pdf_url": paper.get('pdf_url', ''),
-            "local_pdf_path": "",
-            "content_hash": "",
-            "processed_date": datetime.now().isoformat(),
-            "wordcount": len(paper.get('abstract', '').split()),
+
             "local_images": [],
             "oss_urls": {},
             "elasticsearch_indexed": False
@@ -282,17 +279,6 @@ class ArxivCrawler:
 ## 摘要
 
 {paper['abstract']}
-
-## 处理信息
-
-- **处理时间**: {paper['processed_date']}
-- **字数统计**: {paper['wordcount']}
-- **本地PDF**: {paper['local_pdf_path'] or '未下载'}
-- **内容哈希**: {paper['content_hash'] or '无'}
-
----
-
-*本文档由arXiv爬虫系统自动生成*
 """
         
         with open(content_path, 'w', encoding='utf-8') as f:

@@ -32,7 +32,23 @@ cd ../../../m1n10C0nnect0r/minio-file-manager/backend
 python run.py
 ```
 
-### 2. 基础使用
+### 2. 快速启动
+
+```bash
+# 1. 启动MinIO连接器服务 (新终端)
+cd ../../../m1n10C0nnect0r/minio-file-manager/backend && python run.py
+
+# 2. 爬取论文
+python main.py crawl --query "machine learning" --max-results 10
+
+# 3. 上传到存储系统
+python main.py upload --source crawled_data
+
+# 4. 查看系统状态
+python main.py status --detail
+```
+
+### 3. 基础使用
 
 ```bash
 # 爬取论文
@@ -127,6 +143,128 @@ query = "au:Geoffrey Hinton"  # 作者
 query = "cat:cs.AI AND all:transformer"
 query = "(cat:cs.LG OR cat:cs.AI) AND ti:deep"
 ```
+
+### 🤖 AI相关分类完整指南
+
+#### 核心AI分类
+
+**计算机科学 (Computer Science)**
+
+| 分类代码 | 分类名称 | 描述 | 示例查询 |
+|----------|----------|------|----------|
+| `cs.AI` | 人工智能 | 除视觉、机器人、机器学习、多智能体系统和计算语言学外的所有AI领域 | `cat:cs.AI` |
+| `cs.LG` | 机器学习 | 机器学习算法、理论、应用和评估方法 | `cat:cs.LG` |
+| `cs.CL` | 计算与语言 | 自然语言处理、计算语言学、语言模型 | `cat:cs.CL` |
+| `cs.CV` | 计算机视觉 | 图像处理、计算机视觉、模式识别、场景理解 | `cat:cs.CV` |
+| `cs.RO` | 机器人学 | 机器人技术、自动化、控制系统 | `cat:cs.RO` |
+| `cs.NE` | 神经和进化计算 | 神经网络、进化算法、群体智能 | `cat:cs.NE` |
+| `cs.MA` | 多智能体系统 | 多智能体系统、分布式AI、协作智能 | `cat:cs.MA` |
+| `cs.IR` | 信息检索 | 搜索引擎、推荐系统、信息过滤 | `cat:cs.IR` |
+| `cs.HC` | 人机交互 | 用户界面、交互设计、可用性研究 | `cat:cs.HC` |
+
+#### 跨学科AI应用
+
+**电气工程与系统科学 (Electrical Engineering and Systems Science)**
+
+| 分类代码 | 分类名称 | 描述 | 示例查询 |
+|----------|----------|------|----------|
+| `eess.AS` | 音频和语音处理 | 语音识别、音频分析、声学信号处理 | `cat:eess.AS` |
+| `eess.IV` | 图像和视频处理 | 图像增强、视频分析、医学影像 | `cat:eess.IV` |
+| `eess.SP` | 信号处理 | 数字信号处理、滤波器设计、通信信号 | `cat:eess.SP` |
+| `eess.SY` | 系统与控制 | 控制理论、系统建模、自动化 | `cat:eess.SY` |
+
+**统计学 (Statistics)**
+
+| 分类代码 | 分类名称 | 描述 | 示例查询 |
+|----------|----------|------|----------|
+| `stat.ML` | 统计机器学习 | 统计学习理论、贝叶斯方法、统计推断 | `cat:stat.ML` |
+| `stat.AP` | 应用统计 | 统计应用、数据分析、实证研究 | `cat:stat.AP` |
+| `stat.CO` | 计算统计 | 计算方法、蒙特卡罗、优化算法 | `cat:stat.CO` |
+
+**数学 (Mathematics)**
+
+| 分类代码 | 分类名称 | 描述 | 示例查询 |
+|----------|----------|------|----------|
+| `math.OC` | 优化与控制 | 最优化理论、控制理论、运筹学 | `cat:math.OC` |
+| `math.ST` | 统计理论 | 概率论、统计理论、随机过程 | `cat:math.ST` |
+| `math.IT` | 信息论 | 信息理论、编码理论、通信理论 | `cat:math.IT` |
+
+#### 实用查询示例
+
+**单一分类查询:**
+```bash
+# 爬取计算机视觉论文
+python main.py crawl --query "cat:cs.CV" --max-results 50
+
+# 爬取语音处理论文
+python main.py crawl --query "cat:eess.AS" --max-results 30
+
+# 爬取机器人学论文
+python main.py crawl --query "cat:cs.RO" --max-results 40
+```
+
+**多分类组合查询:**
+```bash
+# 爬取核心AI领域论文
+python main.py crawl --query "cat:cs.AI OR cat:cs.LG OR cat:cs.CL" --max-results 100
+
+# 爬取视觉和语音相关论文
+python main.py crawl --query "cat:cs.CV OR cat:eess.AS OR cat:eess.IV" --max-results 80
+
+# 爬取机器学习和统计学习论文
+python main.py crawl --query "cat:cs.LG OR cat:stat.ML" --max-results 60
+```
+
+**关键词+分类组合查询:**
+```bash
+# 在AI分类中搜索transformer相关论文
+python main.py crawl --query "cat:cs.AI AND all:transformer" --max-results 30
+
+# 在计算机视觉中搜索深度学习论文
+python main.py crawl --query "cat:cs.CV AND all:deep learning" --max-results 40
+
+# 在自然语言处理中搜索大语言模型论文
+python main.py crawl --query "cat:cs.CL AND (all:LLM OR all:large language model)" --max-results 50
+```
+
+**时间范围查询:**
+```bash
+# 爬取2024年的AI论文
+python main.py crawl --query "cat:cs.AI AND submittedDate:[202401010000 TO 202412312359]" --max-results 100
+
+# 爬取最近一个月的机器学习论文
+python main.py crawl --query "cat:cs.LG AND submittedDate:[202412010000 TO 202501312359]" --max-results 80
+```
+
+#### 🔥 热门AI研究方向推荐
+
+**大语言模型与生成AI:**
+```bash
+python main.py crawl --query "(cat:cs.CL OR cat:cs.AI OR cat:cs.LG) AND (all:LLM OR all:GPT OR all:transformer OR all:BERT)" --max-results 100
+```
+
+**计算机视觉与多模态:**
+```bash
+python main.py crawl --query "(cat:cs.CV OR cat:cs.AI) AND (all:vision OR all:multimodal OR all:diffusion)" --max-results 80
+```
+
+**强化学习与智能体:**
+```bash
+python main.py crawl --query "(cat:cs.LG OR cat:cs.AI OR cat:cs.MA) AND (all:reinforcement OR all:agent OR all:RL)" --max-results 60
+```
+
+**神经网络架构:**
+```bash
+python main.py crawl --query "(cat:cs.LG OR cat:cs.NE OR cat:cs.AI) AND (all:neural OR all:network OR all:architecture)" --max-results 70
+```
+
+#### 💡 查询优化建议
+
+1. **分批爬取**: 对于大量数据，建议分批次爬取，避免单次请求过多
+2. **合理并发**: 使用3-5个并发，避免对arXiv服务器造成压力
+3. **时间控制**: 设置适当的延迟时间，建议1-2秒
+4. **分类组合**: 合理组合相关分类，提高数据相关性
+5. **关键词筛选**: 结合关键词过滤，获取更精准的结果
 
 ## 🗄️ 存储架构
 

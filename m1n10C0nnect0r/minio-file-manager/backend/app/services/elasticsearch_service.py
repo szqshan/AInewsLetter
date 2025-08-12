@@ -30,9 +30,7 @@ class ElasticsearchService:
                 [host],
                 basic_auth=auth,
                 verify_certs=self.settings.elasticsearch_use_ssl,
-                ssl_show_warn=False,
-                api_key=None,
-                headers={"Accept": "application/vnd.elasticsearch+json;compatible-with=8"}
+                ssl_show_warn=False
             )
         return self.client
     
@@ -74,7 +72,7 @@ class ElasticsearchService:
             await client.index(
                 index=self.index_name,
                 id=doc_id,
-                document=document
+                body=document
             )
             
             return True

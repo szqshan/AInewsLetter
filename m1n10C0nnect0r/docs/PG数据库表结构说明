@@ -1,0 +1,26 @@
+CREATE TABLE public.newsletters (
+	id text NOT NULL,
+	title text NOT NULL,
+	summary text NOT NULL,
+	"content" text NULL,
+	category public."NewsletterCategory" NOT NULL,
+	tags jsonb NULL,
+	author text NULL,
+	"sourceUrl" text NULL,
+	"readTime" int4 NULL,
+	"viewCount" int4 DEFAULT 0 NOT NULL,
+	"likeCount" int4 DEFAULT 0 NOT NULL,
+	"shareCount" int4 DEFAULT 0 NOT NULL,
+	"commentCount" int4 DEFAULT 0 NOT NULL,
+	featured bool DEFAULT false NOT NULL,
+	"memberOnly" bool DEFAULT false NOT NULL,
+	status public."ContentStatus" DEFAULT 'DRAFT'::"ContentStatus" NOT NULL,
+	"publishedAt" timestamp(3) NULL,
+	metadata jsonb NULL,
+	"createdAt" timestamp(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	"updatedAt" timestamp(3) NOT NULL,
+	"contentFileKey" varchar NOT NULL,
+	"contentStorageType" varchar DEFAULT 'markdown'::character varying NOT NULL,
+	CONSTRAINT newsletters_pkey PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX newsletters_title_key ON public.newsletters USING btree (title);

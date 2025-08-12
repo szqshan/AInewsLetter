@@ -102,7 +102,7 @@ class IndexInitializer:
                 # 创建新索引
                 await client.indices.create(
                     index=index_name,
-                    **mapping
+                    body=mapping
                 )
                 logger.info(f"成功创建索引: {index_name}")
                 
