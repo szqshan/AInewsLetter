@@ -10,7 +10,7 @@ import os
 # GitHub API配置
 GITHUB_CONFIG = {
     # GitHub Personal Access Token
-    "api_token": "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",
+    "api_token": os.getenv("GITHUB_TOKEN", ""),  # 使用环境变量
     
     # API基础配置
     "api_base_url": "https://api.github.com",
