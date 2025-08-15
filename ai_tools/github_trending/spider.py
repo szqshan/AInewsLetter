@@ -57,7 +57,10 @@ class GitHubTrendingSpider:
             if language:
                 params['l'] = language
             
-            response = safe_request(self.session.get, self.base_url, params=params)
+            url = self.base_url
+            if params:
+                url += '?' + '&'.join([f"{k}={v}" for k, v in params.items()])
+            response = safe_request(url, headers=self.session.headers)
             if not response:
                 return repos
             
@@ -157,7 +160,7 @@ class GitHubTrendingSpider:
             if not repo.get('url'):
                 return repo
             
-            response = safe_request(self.session.get, repo['url'])
+            response = safe_request(repo['url'], headers=self.session.headers)
             if not response:
                 return repo
             
