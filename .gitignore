@@ -1,5 +1,6 @@
 # 敏感信息文件
 GitHub 信息.txt
+github_token.txt
 
 # Python缓存文件
 __pycache__/

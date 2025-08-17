@@ -1,0 +1,25 @@
+# Claude Newsroom 爬虫依赖包
+
+# 核心爬虫依赖
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# 数据处理
+python-dateutil>=2.8.0
+
+# 命令行工具
+argparse
+
+# 可选：高级爬虫功能（如果需要）
+# playwright>=1.40.0
+# selenium>=4.15.0
+
+# 存储和数据库（如果使用MinIO连接器）
+# minio>=7.1.0
+# psycopg2-binary>=2.9.0
+# elasticsearch>=8.0.0
+
+# 开发和调试
+# requests-cache>=1.1.0
+# fake-useragent>=1.4.0
