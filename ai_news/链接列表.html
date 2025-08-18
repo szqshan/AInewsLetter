@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI情报罗盘 - 交互式浏览器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals & Muted Teal -->
+    <!-- Application Structure Plan: 本应用采用“交互式仪表盘”结构，而非报告的线性章节。核心是一个中央可过滤/搜索的资源目录，左侧配有筛选面板。这种设计将用户从被动阅读者转变为主动探索者，可以根据“信息层级”、“资源类型”或“关键词”快速定位所需信源，极大地提升了这份千大信源名录的可用性和效率。顶部增设了一个可视化图表，直观展示各类信源的数量分布，为用户提供宏观认知。此结构旨在优化信息发现和导航体验，完全服务于内容策展人高效研究的核心目标。 -->
+    <!-- Visualization & Content Choices: 报告内容被拆解为独立的“信息卡片”，每张卡片代表一个信源，包含名称、类型、简介和链接，便于快速浏览和访问（目标：组织与告知）。为提供宏观视角，我选择使用Chart.js创建一个水平条形图，展示不同类型信源（如博客、播客、实验室）的数量分布（目标：比较与告知）。用户点击图表中的条目可以筛选目录，实现了可视化与数据的联动（交互：交叉筛选）。此方案能在没有复杂数值数据的情况下，有效利用图表增强洞察力，且完全基于Canvas实现。 -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            background-color: #F8F7F4;
+            color: #4A4A4A;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #F1F1F1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #A8A8A8;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #888;
+        }
+        .active-filter {
+            background-color: #4FD1C5 !important;
+            color: white !important;
+            border-color: #4FD1C5 !important;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app" class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800">AI情报罗盘</h1>
+            <p class="mt-2 text-lg text-gray-600">一个面向内容策展的交互式核心信源浏览器</p>
+        </header>
+
+        <main>
+            <div class="mb-8 p-6 bg-white rounded-2xl shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">信源生态分布概览</h2>
+                <p class="text-gray-600 mb-4">下图展示了本名录中各类信息源的数量分布。您可以点击图表中的具体类别，以快速筛选下方的信源列表，从而直观地探索AI信息生态的构成。</p>
+                <div class="chart-container">
+                    <canvas id="sourceDistributionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-8">
+                <aside class="w-full lg:w-1/4 xl:w-1/5">
+                    <div class="sticky top-8 p-6 bg-white rounded-2xl shadow-lg">
+                        <h3 class="text-xl font-bold text-gray-700 mb-6">探索与筛选</h3>
+                        
+                        <div class="mb-6">
+                            <label for="search" class="block text-sm font-medium text-gray-700 mb-2">关键词搜索</label>
+                            <input type="text" id="search" placeholder="例如：Karpathy, DeepMind..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition">
+                        </div>
+
+                        <div class="mb-6">
+                            <h4 class="text-sm font-medium text-gray-700 mb-3">按信息层级筛选</h4>
+                            <div id="category-filters" class="flex flex-wrap gap-2"></div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-700 mb-3">按资源类型筛选</h4>
+                            <div id="type-filters" class="flex flex-wrap gap-2"></div>
+                        </div>
+                        
+                        <div class="mt-6">
+                             <button id="reset-filters" class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">重置所有筛选</button>
+                        </div>
+                    </div>
+                </aside>
+
+                <div id="results-container" class="w-full lg:w-3/4 xl:w-4/5">
+                     <div class="mb-4 flex justify-between items-center">
+                        <p id="results-count" class="text-gray-600"></p>
+                    </div>
+                    <div id="source-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sourcesData = [
+                { name: 'Google DeepMind', category: '研究中枢', type: '企业实验室', description: '全球最具影响力的企业AI实验室，Gemini和AlphaFold的创造者。', links: { blog: 'https://deepmind.google/discover/blog/', publications: 'https://deepmind.google/research/publications/', podcast: 'https://deepmind.google/discover/podcast/', twitter: 'https://x.com/googledeepmind', youtube: 'https://www.youtube.com/@googledeepmind' } },
+                { name: 'Meta AI (FAIR)', category: '研究中枢', type: '企业实验室', description: '开源AI领域的巨头，以Llama系列基础模型闻名。', links: { research: 'https://ai.meta.com/research/', blog: 'https://ai.meta.com/blog/', twitter: 'https://twitter.com/MetaAI', youtube: 'https://www.youtube.com/channel/UCn-0309_I2k2s9-tXvY2g2w' } },
+                { name: 'OpenAI', category: '研究中枢', type: '企业实验室', description: '凭借ChatGPT和DALL-E将生成式AI推向主流。', links: { blog: 'https://openai.com/blog', twitter: 'https://twitter.com/OpenAI', youtube: 'https://www.youtube.com/c/OpenAI' } },
+                { name: 'Microsoft Research AI', category: '研究中枢', type: '企业实验室', description: '历史悠久的研究机构，探索从基础理论到应用的全面研究。', links: { blog: 'https://www.microsoft.com/en-us/research/blog/category/artificial-intelligence/', twitter: 'https://twitter.com/MSFTResearch' } },
+                { name: 'Stanford AI Lab (SAIL)', category: '研究中枢', type: '大学实验室', description: 'AI研究的历史重镇，在计算机视觉、NLP等领域影响深远。', links: { website: 'https://ai.stanford.edu/', blog: 'https://ai.stanford.edu/blog/', twitter: 'https://twitter.com/StanfordAILab' } },
+                { name: 'MIT CSAIL', category: '研究中枢', type: '大学实验室', description: '全球规模最大、声誉最卓著的研究实验室之一。', links: { website: 'https://www.csail.mit.edu/', news: 'https://www.csail.mit.edu/news' } },
+                { name: 'Berkeley AI Research (BAIR)', category: '研究中枢', type: '大学实验室', description: '顶尖学术机构，以深度学习、计算机视觉和机器人学闻名。', links: { website: 'https://bair.berkeley.edu/', blog: 'https://bair.berkeley.edu/blog/' } },
+                { name: 'arXiv', category: '研究中枢', type: '预印本平台', description: 'AI研究的“最前线”，最新研究成果的首发地。', links: { ai: 'https://arxiv.org/list/cs.AI/new', ml: 'https://arxiv.org/list/cs.LG/new', cl: 'https://arxiv.org/list/cs.CL/new' } },
+                { name: 'Hugging Face Papers', category: '研究中枢', type: '预印本平台', description: '由社区驱动的热门论文聚合平台，提供重要的“社会化筛选”层。', links: { website: 'https://huggingface.co/papers' } },
+                { name: 'Geoffrey Hinton', category: '影响力人物', type: '架构师', description: '“深度学习教父”，目前是AI安全与风险领域的重要声音。', links: { website: 'https://www.cs.toronto.edu/~hinton/', twitter: 'https://twitter.com/geoffreyhinton' } },
+                { name: 'Yann LeCun', category: '影响力人物', type: '架构师', description: 'Meta首席AI科学家，卷积神经网络先驱，开源AI的坚定倡导者。', links: { website: 'http://yann.lecun.com/', twitter: 'https://twitter.com/ylecun' } },
+                { name: 'Yoshua Bengio', category: '影响力人物', type: '架构师', description: '深度学习和生成模型专家，关注AI的社会影响。', links: { website: 'https://yoshuabengio.org/', twitter: 'https://twitter.com/yoshuabengio' } },
+                { name: 'Andrej Karpathy', category: '影响力人物', type: '实践者', description: '前OpenAI和特斯拉AI负责人，以其深度技术教程闻名。', links: { website: 'https://karpathy.ai/', twitter: 'https://twitter.com/karpathy', youtube: 'https://www.youtube.com/@AndrejKarpathy' } },
+                { name: 'Fei-Fei Li', category: '影响力人物', type: '实践者', description: '斯坦福大学HAI联合主任，ImageNet创建者，倡导以人为本的AI。', links: { website: 'https://profiles.stanford.edu/fei-fei-li', twitter: 'https://twitter.com/drfeifei' } },
+                { name: 'Andrew Ng', category: '影响力人物', type: '实践者', description: 'Coursera联合创始人，AI领域最具影响力的教育家之一。', links: { website: 'https://www.andrewng.org/', twitter: 'https://twitter.com/AndrewYNg' } },
+                { name: 'Demis Hassabis', category: '影响力人物', type: '实践者', description: '谷歌DeepMind联合创始人兼CEO，AlphaGo背后的愿景家。', links: { twitter: 'https://twitter.com/demishassabis' } },
+                { name: 'Ethan Mollick', category: '影响力人物', type: '战略家', description: '沃顿商学院教授，探索AI在商业和教育应用中的“参差不齐的前沿”。', links: { blog: 'https://www.oneusefulthing.org/', twitter: 'https://twitter.com/emollick' } },
+                { name: 'Lex Fridman', category: '影响力人物', type: '战略家', description: 'MIT研究员和播客主持人，以其深度访谈闻名。', links: { website: 'https://lexfridman.com/', podcast: 'https://lexfridman.com/podcast/', twitter: 'https://twitter.com/lexfridman', youtube: 'https://www.youtube.com/@lexfridman' } },
+                { name: 'Kai-Fu Lee', category: '影响力人物', type: '战略家', description: '风险投资家，为理解中美AI格局提供重要视角。', links: { twitter: 'https://twitter.com/kaifulee' } },
+                { name: 'Andreessen Horowitz (a16z)', category: '产业脉搏', type: '风险投资', description: 'AI领域最高产的投资者和内容创作者之一，洞察硅谷前沿思考。', links: { website: 'https://a16z.com/ai/', podcast: 'https://a16z.com/podcasts/ai-a16z/' } },
+                { name: 'Sequoia Capital', category: '产业脉搏', type: '风险投资', description: '传奇VC，对AI的宏观经济学和基础设施建设有精辟分析。', links: { website: 'https://www.sequoiacap.com/stories/' } },
+                { name: 'Gartner', category: '产业脉搏', type: '市场分析', description: '以技术成熟度曲线和魔力象限闻名，提供企业级AI应用视角。', links: { website: 'https://www.gartner.com/en/topics/generative-ai' } },
+                { name: 'CB Insights', category: '产业脉搏', type: '市场分析', description: '追踪创业公司融资、并购和新兴技术趋势的市场情报平台。', links: { website: 'https://www.cbinsights.com/' } },
+                { name: 'NVIDIA', category: '产业脉搏', type: '科技公司', description: '为AI革命提供核心硬件（GPU），其博客是理解AI计算未来的关键。', links: { blog: 'https://blogs.nvidia.com/', dev_blog: 'https://developer.nvidia.com/blog/' } },
+                { name: 'The Neuron', category: '生态圈', type: '新闻通讯', description: '以轻松、易读的风格每日提供AI工具和研究的最新动态。', links: { website: 'https://www.theneurondaily.com/' } },
+                { name: 'AI Tidbits', category: '生态圈', type: '新闻通讯', description: '专注于最新AI技术、突破和教程的精选内容。', links: { website: 'https://www.aitidbits.ai/' } },
+                { name: 'Mindstream', category: '生态圈', type: '新闻通讯', description: '以轻松幽默的方式每日提炼最相关的新闻、技巧和见解。', links: { website: 'https://www.mindstream.news/' } },
+                { name: 'Towards Data Science', category: '生态圈', type: '博客', description: 'Medium上最大的数据科学出版物之一，内容覆盖面广，深度高。', links: { website: 'https://towardsdatascience.com/' } },
+                { name: 'KDnuggets', category: '生态圈', type: '博客', description: '数据科学和机器学习领域的权威博客，每日更新。', links: { website: 'https://www.kdnuggets.com/' } },
+                { name: 'The TWIML AI Podcast', category: '生态圈', type: '播客', description: '邀请AI和机器学习领域的顶尖专家，深入探讨行业前沿。', links: { website: 'https://twimlai.com/podcast/twimlai' } },
+                { name: 'The Cognitive Revolution', category: '生态圈', type: '播客', description: '探索AI对工作、生活和社会文化变革性影响的播客。', links: { website: 'https://www.cognitiverevolution.ai/' } },
+                { name: 'Two Minute Papers', category: '生态圈', type: 'YouTube', description: '将复杂的AI研究论文浓缩成易于理解的两分钟短视频。', links: { youtube: 'https://www.youtube.com/@TwoMinutePapers' } },
+                { name: 'Yannic Kilcher', category: '生态圈', type: 'YouTube', description: '对AI研究论文进行深入、细致的技术分析和批判。', links: { youtube: 'https://www.youtube.com/@YannicKilcher' } },
+                { name: 'Hacker News', category: '生态圈', type: '社群论坛', description: '高质量的科技新闻和讨论论坛，实时把握开发者社群反应。', links: { website: 'https://news.ycombinator.com/' } },
+                { name: 'r/MachineLearning', category: '生态圈', type: '社群论坛', description: 'Reddit上讨论机器学习新闻、研究和日常话题的主要社区。', links: { website: 'https://www.reddit.com/r/MachineLearning/' } },
+                { name: 'Hugging Face', category: '生态圈', type: '开发者中心', description: '开源AI社群的中心枢纽，托管海量模型、数据集和应用。', links: { website: 'https://huggingface.co/', blog: 'https://huggingface.co/blog', twitter: 'https://twitter.com/huggingface' } },
+                { name: '大数据杂谈', category: '中文领域', type: '公众号', description: '从技术视角深入探讨大数据和机器学习，内容扎实。', links: { id: 'BigdataTina2016' } },
+                { name: 'AI早餐汇', category: '中文领域', type: '公众号', description: '聚焦“AI+”应用和行业新闻，风格活泼。', links: { id: 'AImorningshow' } },
+                { name: 'THU数据派', category: '中文领域', type: '公众号', description: '依托清华大学学术背景，兼具学术深度和产业洞察。', links: { id: 'datapi' } },
+                { name: 'CSDN人工智能头条', category: '中文领域', type: '公众号', description: '来自中国最大开发者社区，覆盖AI技术前沿、实战技巧。', links: { id: 'AI_Thinker' } },
+            ];
+
+            const searchInput = document.getElementById('search');
+            const categoryFiltersContainer = document.getElementById('category-filters');
+            const typeFiltersContainer = document.getElementById('type-filters');
+            const sourceCardsContainer = document.getElementById('source-cards');
+            const resultsCount = document.getElementById('results-count');
+            const resetFiltersBtn = document.getElementById('reset-filters');
+            const chartCanvas = document.getElementById('sourceDistributionChart');
+
+            let activeCategoryFilters = [];
+            let activeTypeFilters = [];
+            let myChart;
+
+            function getUniqueValues(key) {
+                return [...new Set(sourcesData.map(item => item[key]))];
+            }
+
+            function createFilterButtons(container, items, filterType) {
+                container.innerHTML = '';
+                items.forEach(item => {
+                    const button = document.createElement('button');
+                    button.className = 'px-3 py-1 border border-gray-300 rounded-full text-xs hover:bg-gray-100 transition';
+                    button.textContent = item;
+                    button.dataset.filter = item;
+                    button.dataset.type = filterType;
+                    container.appendChild(button);
+                });
+            }
+
+            function renderCards(data) {
+                sourceCardsContainer.innerHTML = '';
+                if (data.length === 0) {
+                    sourceCardsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">未找到匹配的信源。</p>`;
+                } else {
+                    data.forEach(source => {
+                        const card = document.createElement('div');
+                        card.className = 'bg-white rounded-xl shadow-md p-5 flex flex-col hover:shadow-xl transition-shadow duration-300';
+                        
+                        let linksHtml = '';
+                        if (source.links) {
+                            linksHtml = Object.entries(source.links).map(([key, value]) => {
+                                let icon = '🔗';
+                                if (key.includes('twitter')) icon = '🐦';
+                                if (key.includes('youtube')) icon = '📺';
+                                if (key.includes('blog') || key.includes('news')) icon = '📝';
+                                if (key.includes('podcast')) icon = '🎙️';
+                                if (key.includes('id')) icon = '💬';
+                                return `<a href="${value.startsWith('http') ? value : '#'}" target="_blank" rel="noopener noreferrer" class="text-teal-600 hover:text-teal-800 transition mr-3 last:mr-0" title="${key}">${icon}</a>`;
+                            }).join('');
+                        }
+
+                        card.innerHTML = `
+                            <div class="flex-grow">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-lg font-bold text-gray-800">${source.name}</h3>
+                                    <span class="text-xs bg-teal-100 text-teal-800 px-2 py-1 rounded-full whitespace-nowrap">${source.type}</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-4">${source.description}</p>
+                            </div>
+                            <div class="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center">
+                                <span class="text-xs text-gray-500">${source.category}</span>
+                                <div class="text-lg">${linksHtml}</div>
+                            </div>
+                        `;
+                        sourceCardsContainer.appendChild(card);
+                    });
+                }
+                resultsCount.textContent = `共找到 ${data.length} 个信源`;
+            }
+
+            function applyFilters() {
+                const searchTerm = searchInput.value.toLowerCase();
+                let filteredData = sourcesData.filter(source => {
+                    const matchesSearch = source.name.toLowerCase().includes(searchTerm) || source.description.toLowerCase().includes(searchTerm);
+                    const matchesCategory = activeCategoryFilters.length === 0 || activeCategoryFilters.includes(source.category);
+                    const matchesType = activeTypeFilters.length === 0 || activeTypeFilters.includes(source.type);
+                    return matchesSearch && matchesCategory && matchesType;
+                });
+                renderCards(filteredData);
+            }
+
+            function updateFilterButtons() {
+                document.querySelectorAll('#category-filters button, #type-filters button').forEach(button => {
+                    const filterValue = button.dataset.filter;
+                    const filterType = button.dataset.type;
+                    if ((filterType === 'category' && activeCategoryFilters.includes(filterValue)) || (filterType === 'type' && activeTypeFilters.includes(filterValue))) {
+                        button.classList.add('active-filter');
+                    } else {
+                        button.classList.remove('active-filter');
+                    }
+                });
+            }
+
+            function handleFilterClick(e) {
+                if (e.target.tagName === 'BUTTON') {
+                    const filterValue = e.target.dataset.filter;
+                    const filterType = e.target.dataset.type;
+                    
+                    let activeFilters = filterType === 'category' ? activeCategoryFilters : activeTypeFilters;
+                    
+                    if (activeFilters.includes(filterValue)) {
+                        activeFilters = activeFilters.filter(f => f !== filterValue);
+                    } else {
+                        activeFilters.push(filterValue);
+                    }
+
+                    if (filterType === 'category') {
+                        activeCategoryFilters = activeFilters;
+                    } else {
+                        activeTypeFilters = activeFilters;
+                    }
+                    
+                    updateFilterButtons();
+                    applyFilters();
+                }
+            }
+            
+            function renderDistributionChart() {
+                const typeCounts = sourcesData.reduce((acc, source) => {
+                    acc[source.type] = (acc[source.type] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const sortedTypes = Object.entries(typeCounts).sort(([,a],[,b]) => b-a);
+                
+                const labels = sortedTypes.map(item => item[0]);
+                const data = sortedTypes.map(item => item[1]);
+
+                const ctx = chartCanvas.getContext('2d');
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '信源数量',
+                            data: data,
+                            backgroundColor: 'rgba(79, 209, 197, 0.6)',
+                            borderColor: 'rgba(79, 209, 197, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(200, 200, 200, 0.2)'
+                                }
+                            },
+                             y: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${context.dataset.label}: ${context.raw}`;
+                                    }
+                                }
+                            }
+                        },
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const clickedIndex = elements[0].index;
+                                const clickedType = myChart.data.labels[clickedIndex];
+                                
+                                activeTypeFilters = [clickedType];
+                                activeCategoryFilters = [];
+                                searchInput.value = '';
+
+                                updateFilterButtons();
+                                applyFilters();
+                                
+                                document.getElementById('results-container').scrollIntoView({ behavior: 'smooth' });
+                            }
+                        }
+                    }
+                });
+            }
+
+            function resetAll() {
+                activeCategoryFilters = [];
+                activeTypeFilters = [];
+                searchInput.value = '';
+                updateFilterButtons();
+                applyFilters();
+            }
+
+            createFilterButtons(categoryFiltersContainer, getUniqueValues('category'), 'category');
+            createFilterButtons(typeFiltersContainer, getUniqueValues('type').sort(), 'type');
+            
+            searchInput.addEventListener('input', applyFilters);
+            categoryFiltersContainer.addEventListener('click', handleFilterClick);
+            typeFiltersContainer.addEventListener('click', handleFilterClick);
+            resetFiltersBtn.addEventListener('click', resetAll);
+
+            renderCards(sourcesData);
+            renderDistributionChart();
+        });
+    </script>
+</body>
+</html>
