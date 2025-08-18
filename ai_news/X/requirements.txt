@@ -1,0 +1,18 @@
+# X (Twitter) 爬虫依赖包
+
+# 核心依赖
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# 数据处理
+python-dateutil>=2.8.0
+
+# 可选高级功能
+# playwright>=1.40.0  # 浏览器自动化 (JS脚本已使用)
+# aiohttp>=3.9.0      # 异步请求
+# selenium>=4.15.0    # 备选浏览器自动化
+
+# 工具库
+pathlib2>=2.3.7; python_version < '3.4'
+typing>=3.7.4; python_version < '3.5'
